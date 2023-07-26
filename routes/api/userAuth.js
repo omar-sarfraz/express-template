@@ -13,16 +13,22 @@ router.post("/api/signup", async (req, res) => {
   try {
     const { password } = req.body;
     let receivedUser = req.body;
+    receivedUser.role = ["user"];
 
     let user = await User.findOne({ email: req.body.email });
     if (user) return res.status(403).json({ message: "User already Exists" });
     if (receivedUser.password !== receivedUser.confirmPassword) return res.status(403).json({ message: "Password do not match" });
 
-    receivedUser.password = await bcrypt.hash(password, process.env.HASH_SECRET_KEY);
+    const salt = await bcrypt.genSalt(parseInt(process.env.SALT_FACTOR));
+
+    receivedUser.password = await bcrypt.hash(password, salt);
 
     user = await User.create(receivedUser);
     const token = jwt.sign({ email: user.email, id: user._id }, process.env.SECRET_KEY, { expiresIn: "24h" });
-    res.status(200).json({ user, token });
+
+    const userData = { email: user.email, firstName: user.firstName, lastName: user.lastName };
+
+    res.status(200).json({ user: userData, token });
   } catch (error) {
     console.log(error);
     res.status(500).send({ message: "Something went wrong" });
@@ -39,7 +45,10 @@ router.post("/api/login", async (req, res) => {
     if (!isPasswordCorrect) return res.status(403).json({ message: "Invalid Credentials" });
 
     const token = jwt.sign({ email: user.email, id: user._id }, process.env.SECRET_KEY, { expiresIn: "3h" });
-    res.status(200).json({ user, token });
+
+    const userData = { email: user.email, firstName: user.firstName, lastName: user.lastName };
+
+    res.status(200).json({ user: userData, token });
   } catch (error) {
     res.status(500).json({ message: "Something went wrong", error });
   }
