@@ -5,8 +5,8 @@ let modelSchema = mongoose.Schema({
   description: String,
   isPublished: Boolean,
   author: String,
-  cover_photo: String,
-  url: String,
+  coverPhotoUri: String,
+  pdfUri: String,
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
