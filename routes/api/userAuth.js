@@ -13,7 +13,7 @@ router.post("/api/signup", async (req, res) => {
   try {
     const { password } = req.body;
     let receivedUser = req.body;
-    receivedUser.role = ["user"];
+    receivedUser.roles = ["user"];
 
     let user = await User.findOne({ email: req.body.email });
     if (user) return res.status(403).json({ message: "User already Exists" });
@@ -39,14 +39,16 @@ router.post("/api/login", async (req, res) => {
   try {
     let { email, password } = req.body;
     let user = await User.findOne({ email });
-    if (!user) return res.status(403).json({ message: "User does not exist" });
+    if (!user) return res.status(404).json({ message: "User does not exist" });
 
     let isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(403).json({ message: "Invalid Credentials" });
+    if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid Credentials" });
 
-    const token = jwt.sign({ email: user.email, id: user._id }, process.env.SECRET_KEY, { expiresIn: "3h" });
+    const isAdmin = user.roles.filter((role) => role === "admin").length === 1 ? true : false;
 
-    const userData = { email: user.email, firstName: user.firstName, lastName: user.lastName };
+    const token = jwt.sign({ email: user.email, id: user._id, isAdmin }, process.env.SECRET_KEY, { expiresIn: "24h" });
+
+    const userData = { email: user.email, firstName: user.firstName, lastName: user.lastName, isAdmin };
 
     res.status(200).json({ user: userData, token });
   } catch (error) {

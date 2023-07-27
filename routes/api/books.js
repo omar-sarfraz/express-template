@@ -1,8 +1,11 @@
 const express = require("express");
 const Book = require("../../models/Book");
-let router = express.Router();
+const router = express.Router();
 
-router.post("/api/books", async function (req, res) {
+const isAdmin = require("../../middlewares/isAdmin");
+
+router.post("/api/books", isAdmin, async function (req, res) {
+  return res.send("Not now");
   let record = new Book(req.body);
   await record.save();
   res.send(record);
